@@ -401,12 +401,12 @@ def relist_service_broker(kwargs):
             raise Exception(errMsg)
 
         spec = response.json().get('spec', None)
-        if spec == None:
+        if spec is None:
             errMsg = "Spec not found in broker reponse. Response body: \n{}".format(response.text)
             raise Exception(errMsg)
 
         relist_requests = spec.get('relistRequests', None)
-        if relist_requests == None:
+        if relist_requests is None:
             errMsg = "relistRequests not found within the spec of broker: {}\n".format(broker_name) + \
                     "Are you sure you are using a ServiceCatalog of >= v0.0.21?"
             raise Exception(errMsg)
