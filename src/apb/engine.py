@@ -5,12 +5,12 @@ import base64
 import shutil
 import string
 import subprocess
-import ruamel.yaml
 import json
 import requests
 import urllib3
 import docker
 import docker.errors
+import ruamel.yaml
 
 from ruamel.yaml import YAML
 from openshift import client as openshift_client, config as openshift_config
