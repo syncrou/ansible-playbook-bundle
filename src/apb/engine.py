@@ -9,11 +9,6 @@ import ruamel.yaml
 import json
 import requests
 import urllib3
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
-# Disable insecure request warnings from both packages
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-
 import docker
 import docker.errors
 
@@ -22,6 +17,10 @@ from openshift import client as openshift_client, config as openshift_config
 from jinja2 import Environment, FileSystemLoader
 from kubernetes import client as kubernetes_client
 from kubernetes.client.rest import ApiException
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+# Disable insecure request warnings from both packages
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 ROLES_DIR = 'roles'
 
