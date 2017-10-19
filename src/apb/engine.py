@@ -451,7 +451,7 @@ def create_role_binding():
             },
         }
         api.create_namespaced_role_binding("default", role_binding)
-    except Exception as e:
+    except Exception:
         api = openshift_client.OapiApi()
         # HACK: this is printing an error but is still actually creating the
         # role binding.
@@ -475,7 +475,6 @@ def create_service_account():
         api.create_namespaced_service_account("default", service_account)
         print("Created Serice Account")
     except Exception as e:
-        pod_name = None
         print("failed - %s" % e)
 
 
@@ -506,7 +505,6 @@ def create_image_pod(image_name):
         api.create_namespaced_pod("default", pod_manifest)
         print("Created Pod")
     except Exception as e:
-        pod_name = None
         print("failed - %s" % e)
 
 
@@ -720,7 +718,6 @@ def cmdrun_init(**kwargs):
 
 def cmdrun_prepare(**kwargs):
     project = kwargs['base_path']
-    roles_path = os.path.join(project, ROLES_DIR)
     spec_path = os.path.join(project, SPEC_FILE)
     dockerfile = DOCKERFILE
     include_deps = kwargs['include_deps']
@@ -769,7 +766,7 @@ def cmdrun_build(**kwargs):
     try:
         client = docker.DockerClient(base_url='unix://var/run/docker.sock', version='auto')
         client.images.build(path=project, tag=tag, dockerfile=dockerfile)
-    except docker.errors.DockerException as e:
+    except docker.errors.DockerException:
         print("Error accessing the docker API. Is the daemon running?")
         raise
 
