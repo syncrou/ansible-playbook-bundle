@@ -346,7 +346,7 @@ def update_dockerfile(project, dockerfile):
 
 def load_source_dependencies(roles_path):
     print('Trying to guess list of dependencies for APB')
-    output = subprocess.check_output("/bin/grep -R \ image: "+roles_path+"|awk '{print $3}'", stderr=subprocess.STDOUT, shell=True)
+    output = subprocess.check_output("/bin/grep -R \ image: " + roles_path + "|awk '{print $3}'", stderr=subprocess.STDOUT, shell=True)
     if "{{" in output or "}}" in output:
         print("Detected variables being used for dependent image names. Please double check the dependencies in your spec file.")
     return output.split('\n')[:-1]
@@ -468,7 +468,7 @@ def create_service_account():
             'apiVersion': 'v1',
             'kind': 'ServiceAccount',
             'metadata': {
-                'name':'service-account-1',
+                'name': 'service-account-1',
                 'namespace': 'default',
             },
         }
@@ -658,7 +658,7 @@ def print_list(services):
 
     template = "{id:%d}{name:%d}{description:%d}" % (max_id + 2, max_name + 2, max_desc + 2)
     print(template.format(id="ID", name="NAME", description="DESCRIPTION"))
-    for service in sorted(services, key=lambda s:s['name']):
+    for service in sorted(services, key=lambda s: s['name']):
         print(template.format(**service))
 
 
