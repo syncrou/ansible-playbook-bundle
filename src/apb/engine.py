@@ -390,9 +390,10 @@ def relist_service_broker(kwargs):
         else:
             headers = {'Authorization': token}
 
-        response = requests.request("get",
-                broker_resource_url(cluster_host, broker_name),
-                verify=kwargs['verify'], headers=headers)
+        response = requests.request(
+            "get",
+            broker_resource_url(cluster_host, broker_name),
+            verify=kwargs['verify'], headers=headers)
 
         if response.status_code != 200:
             errMsg = "Received non-200 status code while retrieving broker: {}\n".format(broker_name) + \
@@ -408,16 +409,17 @@ def relist_service_broker(kwargs):
         relist_requests = spec.get('relistRequests', None)
         if relist_requests is None:
             errMsg = "relistRequests not found within the spec of broker: {}\n".format(broker_name) + \
-                    "Are you sure you are using a ServiceCatalog of >= v0.0.21?"
+                     "Are you sure you are using a ServiceCatalog of >= v0.0.21?"
             raise Exception(errMsg)
 
         inc_relist_requests = relist_requests + 1
 
         headers['Content-Type'] = 'application/strategic-merge-patch+json'
-        response = requests.request("patch",
-                broker_resource_url(cluster_host, broker_name),
-                json={'spec': {'relistRequests': inc_relist_requests}},
-                verify=kwargs['verify'], headers=headers)
+        response = requests.request(
+            "patch",
+            broker_resource_url(cluster_host, broker_name),
+            json={'spec': {'relistRequests': inc_relist_requests}},
+            verify=kwargs['verify'], headers=headers)
 
         if response.status_code != 200:
             errMsg = "Received non-200 status code while patching relistRequests of broker: {}\n".format(broker_name) + \
