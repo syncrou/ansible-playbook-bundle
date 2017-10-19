@@ -345,9 +345,11 @@ def update_dockerfile(project, dockerfile):
 
 def load_source_dependencies(roles_path):
     print('Trying to guess list of dependencies for APB')
-    output = subprocess.check_output("/bin/grep -R \ image: " + roles_path + "|awk '{print $3}'", stderr=subprocess.STDOUT, shell=True)
+    cmd = "/bin/grep -R \ image: {} |awk '{print $3}'".format(roles_path)
+    output = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
     if "{{" in output or "}}" in output:
-        print("Detected variables being used for dependent image names. Please double check the dependencies in your spec file.")
+        print("Detected variables being used for dependent image names. " +
+              "Please double check the dependencies in your spec file.")
     return output.split('\n')[:-1]
 
 
@@ -421,9 +423,9 @@ def relist_service_broker(kwargs):
             verify=kwargs['verify'], headers=headers)
 
         if response.status_code != 200:
-            errMsg = "Received non-200 status code while patching relistRequests of broker: {}\n".format(broker_name) + \
-                "Response body:\n" + \
-                str(response.text)
+            errMsg = "Received non-200 status code while patching relistRequests of broker: {}\n".format(
+                broker_name) + \
+                "Response body:\n{}".format(str(response.text))
             raise Exception(errMsg)
 
         print("Successfully relisted the Service Catalog")
@@ -517,7 +519,10 @@ def retrieve_test_result():
             count += 1
             openshift_config.load_kube_config()
             api = kubernetes_client.CoreV1Api()
-            api_response = api.connect_post_namespaced_pod_exec("test", "default", command="/usr/bin/test-retrieval", tty=False)
+            api_response = api.connect_post_namespaced_pod_exec(
+                "test", "default",
+                command="/usr/bin/test-retrieval",
+                tty=False)
             if "non-zero exit code" not in api_response:
                 return api_response
         except ApiException as e:
