@@ -1,5 +1,12 @@
 # Developer Guide
 
+To get more information on creating your first APB, take a look at our [getting started guide](https://github.com/ansibleplaybookbundle/ansible-playbook-bundle/blob/master/docs/getting_started.md)
+
+1. [Explanation of APB Spec File](#apb-spec-file`)
+1. [APB Actions](#actions)
+1. [Creating Resources with an APB](#resources)
+
+
 ## APB Examples
 For completed APB examples, take a look at some of the APBs in the [ansibleplaybookbundle org](https://github.com/ansibleplaybookbundle)
 * [hello-world-apb](https://github.com/ansibleplaybookbundle/hello-world-apb)
@@ -20,75 +27,165 @@ For completed APB examples, take a look at some of the APBs in the [ansibleplayb
 * [rhscl-mysql-apb](https://github.com/ansibleplaybookbundle/rhscl-mysql-apb)
 * [rds-postgres-apb](https://github.com/ansibleplaybookbundle/rds-postgres-apb)
 
-## Creating Ansible Playbook Bundles (APBs)
-
-In order to create an APB, you will need to start with a skeleton APB directory structure.  The layout of the [directory structure](design.md#directory-structure) is shown in the [design](design.md) document.
-
-### APB Init
-You may create the directory structure yourself, or you can use the `apb init` command to create a simple skeleton structure, and modify it to your needs.  You will need to specify the name of your APB as a minimum input.  Visit the [APB Tooling README](https://github.com/fusor/ansible-playbook-bundle/blob/master/src/README.md) for more information.
-
-Run the `apb init` command
+##### Directory Structure
+The following shows an example directory structure of an APB.
 ```bash
-$ apb init my-apb
-```
-
-### Initial Directory Structure
-The following APB directory structure will be created:
-```bash
-my-apb/
-├── apb.yml
+example-apb/
 ├── Dockerfile
-├── playbooks/
+├── apb.yml
 └── roles/
+│   └── example-apb-openshift
+│       ├── defaults
+│       │   └── main.yml
+│       └── tasks
+│           └── main.yml
+└── playbooks/
+    └── provision.yml
+    └── deprovision.yml
+    └── bind.yml
+    └── unbind.yml
 ```
-### Spec File (Version 1.0)
-The `apb init` will auto generate a spec file.  You must edit this spec file to fit your application. The following is the spec file for [etherpad-apb](https://github.com/ansibleplaybookbundle/etherpad-apb).  More examples can be found in the [ansibleplaybookbundle org](https://github.com/ansibleplaybookbundle)
+
+# APB Spec File
+The APB Spec File (`apb.yml`) is where the outline of your application is declared.  The following is an example APB spec
 
 ```yml
 version: 1.0
-name: etherpad-apb
-description: Note taking web application
+name: example-apb
+description: A short description of what this APB does
 bindable: True
 async: optional
 metadata: 
-  documentationUrl: https://github.com/ether/etherpad-lite/wiki
-  imageUrl: https://translatewiki.net/images/thumb/6/6f/Etherpad_lite.svg/200px-Etherpad_lite.svg.png
-  dependencies: ['docker.io/mariadb:latest', 'docker.io/tvelocity/etherpad-lite:latest']
-  displayName: Etherpad (APB)
-  longDescription: An apb that deploys Etherpad Lite
+  documentationUrl: <link to documentation>
+  imageUrl: <link to URL of image>
+  dependencies: ['<registry>/<organization>/<dependency-name-1>', '<registry>/<organization>/<dependency-name-2>']
+  displayName: Example App (APB)
+  longDescription: A longer description of what this APB does
   providerDisplayName: "Red Hat, Inc."
 plans:
   - name: default
-    description: A single etherpad application with no DB
+    description: A short description of what this plan does
     free: true
     metadata:
       displayName: Default
-      longDescription: This plan provides a single Etherpad application with no database
+      longDescription: A longer description of what this plan deploys
       cost: $0.00
     parameters:
-      - name: mariadb_name
+      - name: parameter_one
         required: true
-        default: etherpad
+        default: foo_string
         type: string
-        title: MariaDB Database Name
-      - name: mariadb_user
-        required: true
-        default: etherpad
-        title: MariaDB User
-        type: string
+        title: Parameter One
         maxlength: 63
-      - name: mariadb_password
-        default: admin
-        type: string
-        description: A random alphanumeric string if left blank
-        title: MariaDB Password
-      - name: mariadb_root_password
-        default: admin
-        type: string
-        description: root password for mariadb
-        title: Root Password
+      - name: parameter_two
+        required: true
+        default: true
+        title: Parameter Two
+        type: boolean
+```
+## Top level structure
+* `version`: Version of the APB spec. Currently only 1.0 is supported.
+* `name`: Name of the APB.
+* `description`: Short description of this APB.
+* `bindable`: Boolean option of whether or not this APB can be bound to. Accepted fields are `true` or `false`.
+* `async`: Field to determine whether the APB can be deployed asynchronously. Accepted fields are `optional`, `required`, `unsupported`.
+* `metadata`: A dictionary field declaring relevant metadata information. Please see the [metadata section](#metadata) for more information.
+* `plans`: A list of plans that can be deployed. Please see the [plans section](#plans) for more information.
+
+### Metadata
+
+* `documentationUrl`: URL to the applications documentation.
+* `imageUrl`: URL to an image which will be displayed in the WebUI for the Service Catalog.
+* `dependencies`: List of images which are consumed from within the APB.
+* `displayName`: The name that will be displayed in the WebUI for this APB.
+* `longDescription`: Longer description that will be displayed when the APB is clicked in the WebUI.
+* `providerDisplayName`: Name of who is providing this APB for consumption.
+
+### Plans
+Plans are declared as a list. This section will explain what each field in a plan describes.
+* `name`: Unique name of plan to deploy. This will be displayed when the APB is clicked from the Service Catalog.
+* `description`: Short description of what will be deployed from this plan.
+* `free`: Boolean field to determine if this plan is free or not. Accepted fields are `true` or `false`.
+* `metadata`: Dictionary field declaring relevant plan metadata information. Please see the [plan metadata section](#plan-metadata)
+* `parameters`: List of parameter dictionaries used as input to the APB. Please see the [parameters section](#parameters)
+
+### Plan Metadata
+* `displayName`: Name to display for the plan in the WebUI.
+* `longDescription`: Longer description of what this plan deploys.
+* `cost`: How much the plan will cost to deploy. Accepted field is `$x.yz`
+
+### Parameters
+Each item in the `parameters` section can have several fields.  `name` is required.  The order of the parameters will be displayed in sequential order in the form in the OpenShift UI.
+```yaml
+parameters:
+  - name: my_param
+    title: My Parameter
+    type: enum
+    enum: ['X', 'Y', 'Z']
+    required: True
+    default: X
+    display_type: select
+    display_group: Group 1
+```
+* `name`: Unique name of the parameter passed into the APB
+* `title`: Displayed label in the UI.
+* `type`: Data type of the parameters as specified by [json-schema](http://json-schema.org/) such as `string`, `number`, `int`, `boolean`, or `enum`.  Default input field type in the UI will be assigned if no `display_type` is assigned.
+* `required`: Whether or not the parameter is required for APB execution.  Required field in UI.
+* `default`: Default value assigned to the parameter.
+* `display_type`: Display type for the UI.  For example, you can override a string input as a `password` to hide it in the UI.  Accepted fields include `text`, `textarea`, `password`, `checkbox`, `select`.
+* `display_group`: will cause a parameter to display in groups with adjacent parameters with matching `display_group` fields.  In the above example, adding another field below with `display_group: Group 1` will visually group them together in the UI under the heading "Group 1".
+
+When using a long list of parameters it might be useful to use a shared parameter list. For an example of this, please see [rhscl-postgresql-apb](https://github.com/ansibleplaybookbundle/rhscl-postgresql-apb/blob/master/apb.yml#L4) for an example.
+
+## Actions
+An action for an APB is the command that the APB is run with. The 5 standard actions that we support is `provision`, `deprovision`, `bind`, `unbind`, and `test`. For an action to be valid there must be a valid file in the `playbooks` directory named `<action>.yml`. These playbooks can do anything which also means that you can technically create any action you would like. Our [mediawiki-apb](https://github.com/ansibleplaybookbundle/mediawiki123-apb/blob/master/playbooks/update.yml) has an example of creating an action `update`.
+
+
+# Common Resources to Provision
+## Service
+The following is a sample ansible task to create a service named `hello-world`.
+```yml
+- name: create hello-world service
+  k8s_v1_service:
+    name: hello-world
+    namespace: '{{ namespace }}'
+    labels:
+      app: hello-world
+      service: hello-world
+    selector:
+      app: hello-world
+      service: hello-world
+    ports:
+      - name: web
+        port: 8080
+        target_port: 8080
 ```
 
+## Deployment Config
+The following is a sample ansible task to create a deployment config for the image: `docker.io/ansibleplaybookbundle/hello-world` which maps to service `hello-world`.
+```yml
+- name: create deployment config
+  openshift_v1_deployment_config:
+    name: hello-world
+    namespace: '{{ namespace }}'
+    labels:
+      app: hello-world
+      service: hello-world
+    replicas: 1
+    selector:
+      app: hello-world
+      service: hello-world
+    spec_template_metadata_labels:
+      app: hello-world
+      service: hello-world
+    containers:
+    - env:
+      image: docker.io/ansibleplaybookbundle/hello-world:latest
+      name: hello-world
+      ports:
+      - container_port: 8080
+        protocol: TCP
+```
 ### Adding optional variables to an Ansible playbook bundle via environment variables
 
 To pass variables into an APB, you will need to escape the variable substitution in your `.yml` files. For example, the below is a section of the [main.yml](https://github.com/fusor/apb-examples/blob/master/etherpad-apb/roles/provision-etherpad-apb/tasks/main.yml#L89) in the [etherpad-apb](https://github.com/fusor/apb-examples/tree/master/etherpad-apb):
@@ -128,88 +225,50 @@ etherpad_db_host: "{{ lookup('env','ETHERPAD_DB_HOST') | default('mariadb', true
 state: present
 ```
 
-### Actions
-Next we'll need to create `actions` for our APB.  At a minimum, we'll need to create the `provision.yml` and `deprovision.yml` under the `playbooks` folder.
-
-The `provision.yml` may look something like this:
+## Route
+The following is an example of creating a route named `hello-world` which maps to service `hello-world`.
 ```yml
-- name: Provision My APB
-  hosts: localhost
-  gather_facts: false
-  connection: local
-  roles:
-  - role: ansible.kubernetes-modules
-    install_python_requirements: no
-  - role: my-apb-openshift
-    playbook_debug: false
+- name: create hello-world route
+  openshift_v1_route:
+    name: hello-world
+    namespace: '{{ namespace }}'
+    spec_port_target_port: web
+    labels:
+      app: hello-world
+      service: hello-world
+    to_name: hello-world
 ```
 
-And a simple `deprovision.yml` may look like this.
+## Persistent Volume
+The following is an example of creating a persistent volume claim resource.
 ```yml
-- name: Deprovision My APB
-  hosts: localhost
-  gather_facts: false
-  connection: local
-  vars:
-    state: absent
-  roles:
-  - role: ansible.kubernetes-modules
-    install_python_requirements: no
-  - role: my-apb-openshift
-    playbook_debug: false
+- name: create volume claim
+  k8s_v1_persistent_volume_claim:
+    name: hello-world-db
+    namespace: '{{ namespace }}'
+    state: present
+    access_modes:
+      - ReadWriteOnce
+    resources_requests:
+      storage: 1Gi
 ```
 
-### Updated Directory Structure 
-We will also need to create the Ansible roles as specified in the actions. The below directory structure shows what it can look like:
+In addition, we need to add our volume to the deployment config declaration. The following is an example deployment config with a persistent volume.
 
-```bash
-my-apb/
-├── apb.yml
-├── Dockerfile
-├── playbooks
-│   └── deprovision.yml
-│   └── provision.yml
-└── roles
-    └── my-apb-openshift
-        ├── defaults
-        │   └── main.yml
-        ├── files
-        │   └── <my-apb files>
-        ├── README
-        ├── tasks
-        │   └── main.yml
-        └── templates
-            └── <template files>
+```yml
+- name: create hello-world-db deployment config
+  openshift_v1_deployment_config:
+    name: hello-world-db
+    ---
+    volumes:
+    - name: hello-world-db
+      persistent_volume_claim:
+        claim_name: hello-world-db
+      test: false
+      triggers:
+      - type: ConfigChange
 ```
 
-### APB Prepare
-If the `apb.yml` was edited at all, `apb prepare` must be ran to update the encoding of the spec file in the `Dockerfile`.
-
-```bash
-$ apb prepare
-```
-
-### Build
-We can now build the APB by running from the parent directory:
-
-```bash
-$ apb build
-```
-or
-```bash
-$ apb build --tag <registry-prefix>/<docker-org>/my-apb
-```
-
-### Deploy
-We can now run the APB with:
-
-```bash
-$ docker run \
-    -e "OPENSHIFT_TARGET=https://<oc-cluster-host>:<oc-cluster-port>" \
-    -e "OPENSHIFT_TOKEN=<oc-token>" \
-    <docker-org>/my-apb <action>
-```
-where `<action>` is either `provision` or `deprovision`.
 
 # Tips and Tricks
 
