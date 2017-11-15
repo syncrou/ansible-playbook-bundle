@@ -5,12 +5,12 @@ To get more information on creating your first APB, take a look at our [getting 
   1. [Explanation of APB Spec File](#apb-spec-file)
   1. [Dockerfile](#dockerfile)
   1. [APB Actions (Playbooks)](#actions)
+     * [Binding Credentials](#binding-credentials)
   1. [Working with Common Resources](#working-with-common-resources)
      * [Service](#service)
      * [DeploymentConfig](#deployment-config)
      * [Route](#route)
      * [PersistentVolume](#persistent-volume)
-     * [Binding Credentials](#asb-encode-binding)
   1. [APB Spec Version](#apb-spec-versioning)
   1. [Tips & Tricks](#tips-and-tricks)
      * [Optional Variables](#optional-variables)
@@ -174,6 +174,20 @@ USER apb
 ## Actions
 An action for an APB is the command that the APB is run with. The 5 standard actions that we support is `provision`, `deprovision`, `bind`, `unbind`, and `test`. For an action to be valid there must be a valid file in the `playbooks` directory named `<action>.yml`. These playbooks can do anything which also means that you can technically create any action you would like. Our [mediawiki-apb](https://github.com/ansibleplaybookbundle/mediawiki123-apb/blob/master/playbooks/update.yml) has an example of creating an action `update`.
 
+Most all APBs will normally have at least a `provision` to create resources and a `deprovision` action to destroy the resources when deleting the service.
+
+<a id="binding-credentials"></a>
+`bind` and `unbind` are used when the coordinates of one service needs to be made available to another service.  This is often the case when creating a data service and making it available to an application.  There are future plans to asynchronously execute `bind` and `unbind` playbooks, but currently, the coordinates are made available during the provision.  
+
+For this we use the `asb_encode_binding` module. This module should be called at the end of the APBs provision role and it will return bind credentials to the Ansible Service Broker.
+```
+- name: encode bind credentials
+  asb_encode_binding:
+    fields:
+      EXAMPLE_FIELD: foo
+      EXAMPLE_FIELD2: foo2
+```
+
 
 # Working with Common Resources
 
@@ -308,15 +322,6 @@ The following is an example of creating a persistent volume claim resource and d
     namespace: '{{ namespace }}'
     state: absent
 
-```
-## ASB Encode Binding
-A very useful task to use when creating a bindable APB is the `asb_encode_binding` module. This module should be called at the end of the APBs provision role and it will return bind credentials to the Ansible Service Broker.
-```
-- name: encode bind credentials
-  asb_encode_binding:
-    fields:
-      EXAMPLE_FIELD: foo
-      EXAMPLE_FIELD2: foo2
 ```
 
 # Tips and Tricks
