@@ -2,9 +2,17 @@
 
 To get more information on creating your first APB, take a look at our [getting started guide](https://github.com/ansibleplaybookbundle/ansible-playbook-bundle/blob/master/docs/getting_started.md)
 
-1. [Explanation of APB Spec File](#apb-spec-file`)
-1. [APB Actions](#actions)
-1. [Creating Resources with an APB](#resources)
+  1. [Explanation of APB Spec File](#apb-spec-file)
+  1. [APB Actions](#actions)
+  1. [Creating Resources with an APB](#common-resources-to-provision)
+     * [Service](#service)
+     * [DeploymentConfig](#deployment-config)
+     * [Route](#route)
+     * [PersistentVolume](#persistent-volume)
+  1. [APB Spec Version](#apb-spec-versioning)
+  1. [Tips & Tricks](#tips-and-tricks)
+     * [Working with Restricted SCC](#working-with-the-restricted-scc)
+     * [Using a ConfigMap](#using-a-configmap-within-an-apb)
 
 
 ## APB Examples
@@ -84,7 +92,7 @@ plans:
         type: boolean
 ```
 ## Top level structure
-* `version`: Version of the APB spec. Currently only 1.0 is supported.
+* `version`: Version of the APB spec. Please see [versioning](#apb-spec-versioning) for more information.
 * `name`: Name of the APB.
 * `description`: Short description of this APB.
 * `bindable`: Boolean option of whether or not this APB can be bound to. Accepted fields are `true` or `false`.
@@ -143,7 +151,7 @@ An action for an APB is the command that the APB is run with. The 5 standard act
 
 # Common Resources to Provision
 ## Service
-The following is a sample ansible task to create a service named `hello-world`.
+The following is a sample ansible task to create a service named `hello-world`. It is worth noting that the `namespace` variable in an APB will be provided by the Ansible Service Broker when launched from the WebUI.
 ```yml
 - name: create hello-world service
   k8s_v1_service:
@@ -207,14 +215,11 @@ To pass variables into an APB, you will need to escape the variable substitution
         value: '{{ mariadb_password }}'
 ```
 
-The above expects the `namespace` variable to be defined, which was not part of the `parameters` in the spec file `apb.yml`.
-
 To define variables, use the `main.yml` file under the `defaults` folder to define/set other variables for your APB.  For example, below is the [defaults/main.yml](https://github.com/fusor/apb-examples/blob/master/etherpad-apb/roles/provision-etherpad-apb/defaults/main.yml) for the `etherpad-apb`:
 
 ```yml
 ---
 playbook_debug: no
-namespace: "{{ lookup('env','NAMESPACE') | default('etherpad-apb', true) }}"
 mariadb_root_password: "{{ lookup('env','MYSQL_ROOT_PASSWORD') | default('admin', true) }}"
 mariadb_name: "{{ lookup('env','MYSQL_DATABASE') | default('etherpad', true) }}"
 mariadb_user: "{{ lookup('env','MYSQL_USER') | default('etherpad', true) }}"
@@ -272,7 +277,7 @@ In addition, we need to add our volume to the deployment config declaration. The
 
 # Tips and Tricks
 
-## Working with the restriced scc
+## Working with the restricted scc
 When building an OpenShift image, it is important that we do not have our application running as the root user when at all possible. When running under the restriced security context, the application image is launched with a random UID. This will cause problems if your application folder is owned by the root user. A good way to work around this is to add a user to the root group and make the application folder owned by the root group. A very good article on how to support Arbitrary User IDs is shown [here](https://docs.openshift.org/latest/creating_images/guidelines.html#openshift-origin-specific-guidelines). The following is a Dockerfile example of a node app running in `/usr/src`. This command would be run after the application is installed in `/usr/src` and the associated environment variables set.
 
 ```Dockerfile
@@ -287,6 +292,8 @@ USER 1001
 ```
 
 ## Using a ConfigMap within an APB
+There is a temporary workaround we are using to create configmaps from ansible due to a bug in the Ansible modules.
+
 One common use case for ConfigMaps is when the parameters of an APB will be used within a configuration file of an application or service. The ConfigMap module allows you to mount a ConfigMap into a pod as a volume which can be used to store the config file. This approach allows you to also leverage the power Ansible's `template` module to create a ConfigMap out of APB paramters. The following is an example of creating a ConfigMap from a jinja template mounted into a pod as a volume.
 
 ```yaml
@@ -342,6 +349,8 @@ One common use case for ConfigMaps is when the parameters of an APB will be used
 
 # APB Spec Versioning
 We are using semantic versioning with the format of x.y where x is a major release and y is a minor release.
+
+The current spec version is 1.0.
 
 ## Major Version Bump
 We will increment the major version whenever an API breaking change is introduced to the APB spec. Some examples include:
