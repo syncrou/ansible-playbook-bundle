@@ -9,6 +9,7 @@ To get more information on creating your first APB, take a look at our [getting 
      * [DeploymentConfig](#deployment-config)
      * [Route](#route)
      * [PersistentVolume](#persistent-volume)
+     * [Binding Credentials](#asb-encode-binding)
   1. [APB Spec Version](#apb-spec-versioning)
   1. [Tips & Tricks](#tips-and-tricks)
      * [Working with Restricted SCC](#working-with-the-restricted-scc)
@@ -274,6 +275,15 @@ In addition, we need to add our volume to the deployment config declaration. The
       - type: ConfigChange
 ```
 
+## ASB Encode Binding
+A very useful task to use when creating a bindable APB is the `asb_encode_binding` module. This module should be called at the end of the APBs provision role and it will return bind credentials to the Ansible Service Broker.
+```
+- name: encode bind credentials
+  asb_encode_binding:
+    fields:
+      EXAMPLE_FIELD: foo
+      EXAMPLE_FIELD2: foo2
+```
 
 # Tips and Tricks
 

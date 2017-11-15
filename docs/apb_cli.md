@@ -146,13 +146,17 @@ subcommand:
 ## Typical Workflows
 
 #### Local Registry
+In order to use the internal OpenShift Docker Registry to source APBs, you must have configured the Ansible Service Broker to use the `local_openshift` type registry adapter. Please see the [config](https://github.com/openshift/ansible-service-broker/blob/master/docs/config.md#local-openshift-registry) section for more information.
 ```bash
 apb init my-new-apb
 cd my-apb
 apb build
-apb push
+apb push --openshift
 apb list
 ```
+
+If you are using a namespace other than the default `openshift` namespace to host your APBs then you can use the following command:
+`apb push -o --namespace <namespace>`
 
 #### Remote Registry
 ```bash
@@ -379,7 +383,7 @@ apb push [OPTIONS]
 
 
 ##### Examples
-Push to the mock registry
+Push to the Ansible Service Broker development endpoint
 ```bash
 apb push
 ```
@@ -387,6 +391,11 @@ apb push
 Push to the local OpenShift registry
 ```bash
 apb push -o
+```
+
+Push to the local OpenShift registry under namespace `leto`
+```bash
+apb push -o --namespace leto
 ```
 
 ---
