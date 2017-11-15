@@ -3,8 +3,9 @@
 To get more information on creating your first APB, take a look at our [getting started guide](https://github.com/ansibleplaybookbundle/ansible-playbook-bundle/blob/master/docs/getting_started.md)
 
   1. [Explanation of APB Spec File](#apb-spec-file)
-  1. [APB Actions](#actions)
-  1. [Creating Resources with an APB](#common-resources-to-provision)
+  1. [Dockerfile](#dockerfile)
+  1. [APB Actions (Playbooks)](#actions)
+  1. [Working with Common Resources](#working-with-common-resources)
      * [Service](#service)
      * [DeploymentConfig](#deployment-config)
      * [Route](#route)
@@ -12,6 +13,7 @@ To get more information on creating your first APB, take a look at our [getting 
      * [Binding Credentials](#asb-encode-binding)
   1. [APB Spec Version](#apb-spec-versioning)
   1. [Tips & Tricks](#tips-and-tricks)
+     * [Optional Variables](#optional-variables)
      * [Working with Restricted SCC](#working-with-the-restricted-scc)
      * [Using a ConfigMap](#using-a-configmap-within-an-apb)
 
@@ -58,7 +60,7 @@ example-apb/
 # APB Spec File
 The APB Spec File (`apb.yml`) is where the outline of your application is declared.  The following is an example APB spec
 
-```yml
+```yaml
 version: 1.0
 name: example-apb
 description: A short description of what this APB does
@@ -146,14 +148,40 @@ parameters:
 
 When using a long list of parameters it might be useful to use a shared parameter list. For an example of this, please see [rhscl-postgresql-apb](https://github.com/ansibleplaybookbundle/rhscl-postgresql-apb/blob/master/apb.yml#L4) for an example.
 
+
+## Dockerfile
+The Dockerfile is what's used to actually build the APB image.  As a result, sometimes you will need to customize it for your own needs.  For example, if running a playbook that requires interactions with PostgreSQL, you may want to install the required packages by adding the `yum install`.
+
+```yaml
+FROM ansibleplaybookbundle/apb-base
+MAINTAINER Ansible Playbook Bundle Community
+
+LABEL "com.redhat.apb.spec"=\
+"<------------base64-encoded-spec------------>"
+
+
+COPY roles /opt/ansible/roles
+COPY playbooks /opt/apb/actions
+RUN chmod -R g=u /opt/{ansible,apb}
+
+
+### INSTALL THE REQUIRED PACKAGES
+RUN yum -y install python-boto postgresql && yum clean all
+
+USER apb
+```
+
 ## Actions
 An action for an APB is the command that the APB is run with. The 5 standard actions that we support is `provision`, `deprovision`, `bind`, `unbind`, and `test`. For an action to be valid there must be a valid file in the `playbooks` directory named `<action>.yml`. These playbooks can do anything which also means that you can technically create any action you would like. Our [mediawiki-apb](https://github.com/ansibleplaybookbundle/mediawiki123-apb/blob/master/playbooks/update.yml) has an example of creating an action `update`.
 
 
-# Common Resources to Provision
+# Working with Common Resources
+
 ## Service
 The following is a sample ansible task to create a service named `hello-world`. It is worth noting that the `namespace` variable in an APB will be provided by the Ansible Service Broker when launched from the WebUI.
-```yml
+
+* Provision
+```yaml
 - name: create hello-world service
   k8s_v1_service:
     name: hello-world
@@ -170,9 +198,19 @@ The following is a sample ansible task to create a service named `hello-world`. 
         target_port: 8080
 ```
 
+* Deprovision
+```yaml
+- k8s_v1_service:
+    name: hello-world
+    namespace: '{{ namespace }}'
+    state: absent
+```
+
 ## Deployment Config
 The following is a sample ansible task to create a deployment config for the image: `docker.io/ansibleplaybookbundle/hello-world` which maps to service `hello-world`.
-```yml
+
+* Provision
+```yaml
 - name: create deployment config
   openshift_v1_deployment_config:
     name: hello-world
@@ -195,11 +233,97 @@ The following is a sample ansible task to create a deployment config for the ima
       - container_port: 8080
         protocol: TCP
 ```
-### Adding optional variables to an Ansible playbook bundle via environment variables
 
-To pass variables into an APB, you will need to escape the variable substitution in your `.yml` files. For example, the below is a section of the [main.yml](https://github.com/fusor/apb-examples/blob/master/etherpad-apb/roles/provision-etherpad-apb/tasks/main.yml#L89) in the [etherpad-apb](https://github.com/fusor/apb-examples/tree/master/etherpad-apb):
+* Deprovision
+```yaml
+- openshift_v1_deployment_config:
+    name: hello-world
+    namespace: '{{ namespace }}'
+    state: absent
+```
 
-```yml
+## Route
+The following is an example of creating a route named `hello-world` which maps to service `hello-world`.
+* Provision
+```yaml
+- name: create hello-world route
+  openshift_v1_route:
+    name: hello-world
+    namespace: '{{ namespace }}'
+    spec_port_target_port: web
+    labels:
+      app: hello-world
+      service: hello-world
+    to_name: hello-world
+```
+
+* Deprovision
+```yaml
+- openshift_v1_route:
+    name: hello-world
+    namespace: '{{ namespace }}'
+    state: absent
+```
+
+## Persistent Volume
+The following is an example of creating a persistent volume claim resource and deployment config that uses it.
+* Provision
+```yaml
+# Persistent volume resource
+- name: create volume claim
+  k8s_v1_persistent_volume_claim:
+    name: hello-world-db
+    namespace: '{{ namespace }}'
+    state: present
+    access_modes:
+      - ReadWriteOnce
+    resources_requests:
+      storage: 1Gi
+
+
+# In addition to the resource, we need to add our volume to the deployment config declaration. 
+# The following is an example deployment config with a persistent volume.
+- name: create hello-world-db deployment config
+  openshift_v1_deployment_config:
+    name: hello-world-db
+    ---
+    volumes:
+    - name: hello-world-db
+      persistent_volume_claim:
+        claim_name: hello-world-db
+      test: false
+      triggers:
+      - type: ConfigChange
+```
+
+* Deprovision
+```yaml
+- openshift_v1_deployment_config:
+    name: hello-world-db
+    namespace: '{{ namespace }}'
+    state: absent
+
+- k8s_v1_persistent_volume_claim:
+    name: hello-world-db
+    namespace: '{{ namespace }}'
+    state: absent
+
+```
+## ASB Encode Binding
+A very useful task to use when creating a bindable APB is the `asb_encode_binding` module. This module should be called at the end of the APBs provision role and it will return bind credentials to the Ansible Service Broker.
+```
+- name: encode bind credentials
+  asb_encode_binding:
+    fields:
+      EXAMPLE_FIELD: foo
+      EXAMPLE_FIELD2: foo2
+```
+
+# Tips and Tricks
+
+## Optional Variables
+You can add optional variables to an Ansible Playbook Bundle by using environment variables. To pass variables into an APB, you will need to escape the variable substitution in your `.yml` files. For example, the below is a section of the [main.yml](https://github.com/fusor/apb-examples/blob/master/etherpad-apb/roles/provision-etherpad-apb/tasks/main.yml#L89) in the [etherpad-apb](https://github.com/fusor/apb-examples/tree/master/etherpad-apb):
+```yaml
 - name: create mariadb deployment config
   openshift_v1_deployment_config:
     name: mariadb
@@ -218,8 +342,7 @@ To pass variables into an APB, you will need to escape the variable substitution
 
 To define variables, use the `main.yml` file under the `defaults` folder to define/set other variables for your APB.  For example, below is the [defaults/main.yml](https://github.com/fusor/apb-examples/blob/master/etherpad-apb/roles/provision-etherpad-apb/defaults/main.yml) for the `etherpad-apb`:
 
-```yml
----
+```yaml
 playbook_debug: no
 mariadb_root_password: "{{ lookup('env','MYSQL_ROOT_PASSWORD') | default('admin', true) }}"
 mariadb_name: "{{ lookup('env','MYSQL_DATABASE') | default('etherpad', true) }}"
@@ -231,61 +354,6 @@ etherpad_db_host: "{{ lookup('env','ETHERPAD_DB_HOST') | default('mariadb', true
 state: present
 ```
 
-## Route
-The following is an example of creating a route named `hello-world` which maps to service `hello-world`.
-```yml
-- name: create hello-world route
-  openshift_v1_route:
-    name: hello-world
-    namespace: '{{ namespace }}'
-    spec_port_target_port: web
-    labels:
-      app: hello-world
-      service: hello-world
-    to_name: hello-world
-```
-
-## Persistent Volume
-The following is an example of creating a persistent volume claim resource.
-```yml
-- name: create volume claim
-  k8s_v1_persistent_volume_claim:
-    name: hello-world-db
-    namespace: '{{ namespace }}'
-    state: present
-    access_modes:
-      - ReadWriteOnce
-    resources_requests:
-      storage: 1Gi
-```
-
-In addition, we need to add our volume to the deployment config declaration. The following is an example deployment config with a persistent volume.
-
-```yml
-- name: create hello-world-db deployment config
-  openshift_v1_deployment_config:
-    name: hello-world-db
-    ---
-    volumes:
-    - name: hello-world-db
-      persistent_volume_claim:
-        claim_name: hello-world-db
-      test: false
-      triggers:
-      - type: ConfigChange
-```
-
-## ASB Encode Binding
-A very useful task to use when creating a bindable APB is the `asb_encode_binding` module. This module should be called at the end of the APBs provision role and it will return bind credentials to the Ansible Service Broker.
-```
-- name: encode bind credentials
-  asb_encode_binding:
-    fields:
-      EXAMPLE_FIELD: foo
-      EXAMPLE_FIELD2: foo2
-```
-
-# Tips and Tricks
 
 ## Working with the restricted scc
 When building an OpenShift image, it is important that we do not have our application running as the root user when at all possible. When running under the restriced security context, the application image is launched with a random UID. This will cause problems if your application folder is owned by the root user. A good way to work around this is to add a user to the root group and make the application folder owned by the root group. A very good article on how to support Arbitrary User IDs is shown [here](https://docs.openshift.org/latest/creating_images/guidelines.html#openshift-origin-specific-guidelines). The following is a Dockerfile example of a node app running in `/usr/src`. This command would be run after the application is installed in `/usr/src` and the associated environment variables set.
