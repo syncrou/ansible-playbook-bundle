@@ -11,7 +11,7 @@ An **Ansible Playbook Bundle (APB)** is a lightweight application definition (me
 ## Documentation
 * [Getting Started](docs/getting_started.md) - step by step tutorial to create an Ansible Playbook Bundle
 * [Design](docs/design.md) - overall design of Ansible Playbook Bundles
-* [Developers](docs/developers.md) - in depth explanation of Ansible Playbook Bundles
+* [Developers](docs/developers.md) - in-depth explanation of Ansible Playbook Bundles
 * [APB CLI Tool](docs/apb_cli.md) - installation and usage of the `apb` cli tool
 * [Ansible Service Broker](https://github.com/openshift/ansible-service-broker) - more information about the Ansible Service Broker which runs APBs
 

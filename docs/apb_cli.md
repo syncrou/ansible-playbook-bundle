@@ -44,7 +44,7 @@ Pull the container:
 docker pull docker.io/ansibleplaybookbundle/apb
 ```
 
-Create an alias in your .bashrc or somewhere else sane for your shell:
+Create an alias in your `.bashrc` or somewhere else sane for your shell:
 ```bash
 alias apb='docker run --rm --privileged -v $PWD:/mnt -v $HOME/.kube:/.kube -v /var/run/docker.sock:/var/run/docker.sock -u $UID docker.io/ansibleplaybookbundle/apb'
 ```
@@ -72,7 +72,7 @@ sudo yum -y install apb
 ```
 
 
-For Fedora 25 or Fedora 26:
+For Fedora 26 or Fedora 27:
 ```
 sudo dnf -y install dnf-plugins-core
 sudo dnf -y copr enable @ansible-service-broker/ansible-service-broker
@@ -156,9 +156,13 @@ apb list
 ```
 
 If you are using a namespace other than the default `openshift` namespace to host your APBs then you can use the following command:
-`apb push -o --namespace <namespace>`
+```
+apb push -o --namespace <namespace>
+```
 
 #### Remote Registry
+Ansible Service Broker can also be [configured](https://github.com/openshift/ansible-service-broker/blob/master/docs/config.md#dockerhub-registry) to use a remote registry and org such as [docker.io/ansibleplaybookbundle](https://hub.docker.com/u/ansibleplaybookbundle/) or your own personal account.  In order to use this for developing APBs, you can build and push to your remote registry and then `bootstrap` to reload your APBs.
+
 ```bash
 apb init my-new-apb
 cd my-apb

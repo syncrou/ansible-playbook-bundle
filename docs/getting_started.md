@@ -14,7 +14,7 @@
 
 ## Introduction to Ansible Playbook Bundles (APBs)
 
-In this tutorial, we'll walk through the creation of some sample APBs.  We will create actions for them to allow provision, deprovision, bind, and unbind.  You can find more information about the design of APBs in the [design doc](https://github.com/fusor/ansible-playbook-bundle/blob/master/docs/design.md).  More in depth information about writing APBs is available in the [developers doc](developers.md)
+In this tutorial, we'll walk through the creation of some sample APBs.  We will create actions for them to allow provision, deprovision, bind, and unbind.  You can find more information about the design of APBs in the [design doc](https://github.com/fusor/ansible-playbook-bundle/blob/master/docs/design.md).  More in-depth information about writing APBs is available in the [developers doc](developers.md)
 
 *Note:  For the remainder of this tutorial, substitute your own information for items marked in brackets, for example `<host>:<port>` might need to be replaced with `172.17.0.1.nip.io:8443`.*
 
@@ -416,7 +416,7 @@ From the previous sections, we learned how to deploy a standalone application.  
 For a look at executing the bind action playbooks using asynchronous bind and bind parameters, look [here](./getting_started_async_bind.md) to try out the experimental feature.  This will be enabled by default when Kubernetes supports [asynchronous bind](https://github.com/kubernetes-incubator/service-catalog/issues/1209)
 
 ##### Bind - Prep
-To give us a good starting point, we'll create the necessary files for provision and deprovisioning PostgreSQL. A more in depth example can be found at the [APB example for Postgres](https://github.com/ansibleplaybookbundle/rhscl-postgresql-apb).
+To give us a good starting point, we'll create the necessary files for provision and deprovisioning PostgreSQL. A more in-depth example can be found at the [APB example for Postgres](https://github.com/ansibleplaybookbundle/rhscl-postgresql-apb).
 
 ```
 apb init my-pg-apb --bindable
@@ -730,7 +730,7 @@ If you are running the Broker manually, you must include the Port as well as IP 
 
 ### More information
 * [Design](design.md) - overall design of Ansible Playbook Bundles
-* [Developers](developers.md) - in depth explanation of Ansible Playbook Bundles
+* [Developers](developers.md) - in-depth explanation of Ansible Playbook Bundles
 * [APB CLI Tool](apb_cli.md) - installation and usage of the `apb` cli tool
 * [OpenShift Origin Docs](https://docs.openshift.org/latest/welcome/index.html)
 * The [ansible-kubernetes-modules](https://github.com/ansible/ansible-kubernetes-modules) project.
