@@ -1,6 +1,6 @@
 # Developer Guide
 
-To get more information on creating your first APB, take a look at our [getting started guide](https://github.com/ansibleplaybookbundle/ansible-playbook-bundle/blob/master/docs/getting_started.md)
+The APB developer guide provides an in depth guide to creating APBs. This guide will explain the fundamental components that make up an APB and is meant to help an experienced APB developer get a better understanding of each individual component within an APB. If you are looking to get more information on creating your first APB, take a look at our [getting started guide](https://github.com/ansibleplaybookbundle/ansible-playbook-bundle/blob/master/docs/getting_started.md).
 
   1. [Explanation of APB Spec File](#apb-spec-file)
   1. [Dockerfile](#dockerfile)
@@ -96,7 +96,7 @@ plans:
 ```
 ## Top level structure
 * `version`: Version of the APB spec. Please see [versioning](#apb-spec-versioning) for more information.
-* `name`: Name of the APB.
+* `name`: Name of the APB. Names must be valid ASCII and may contain lowercase letters, digits, underscores, periods and dashed. Please see [Docker's guidelines](https://docs.docker.com/engine/reference/commandline/tag/#extended-description) for valid tag names.
 * `description`: Short description of this APB.
 * `bindable`: Boolean option of whether or not this APB can be bound to. Accepted fields are `true` or `false`.
 * `async`: Field to determine whether the APB can be deployed asynchronously. Accepted fields are `optional`, `required`, `unsupported`.
@@ -172,14 +172,14 @@ USER apb
 ```
 
 ## Actions
-An action for an APB is the command that the APB is run with. The 5 standard actions that we support is `provision`, `deprovision`, `bind`, `unbind`, and `test`. For an action to be valid there must be a valid file in the `playbooks` directory named `<action>.yml`. These playbooks can do anything which also means that you can technically create any action you would like. Our [mediawiki-apb](https://github.com/ansibleplaybookbundle/mediawiki123-apb/blob/master/playbooks/update.yml) has an example of creating an action `update`.
+An action for an APB is the command that the APB is run with. 5 standard actions that we support are `provision`, `deprovision`, `bind`, `unbind`, and `test`. For an action to be valid there must be a valid file in the `playbooks` directory named `<action>.yml`. These playbooks can do anything which also means that you can technically create any action you would like. Our [mediawiki-apb](https://github.com/ansibleplaybookbundle/mediawiki123-apb/blob/master/playbooks/update.yml) has an example of creating an action `update`.
 
-Most all APBs will normally have at least a `provision` to create resources and a `deprovision` action to destroy the resources when deleting the service.
+Most APBs will normally have a `provision` to create resources and a `deprovision` action to destroy the resources when deleting the service.
 
 <a id="binding-credentials"></a>
 `bind` and `unbind` are used when the coordinates of one service needs to be made available to another service.  This is often the case when creating a data service and making it available to an application.  There are future plans to asynchronously execute `bind` and `unbind` playbooks, but currently, the coordinates are made available during the provision.  
 
-For this we use the `asb_encode_binding` module. This module should be called at the end of the APBs provision role and it will return bind credentials to the Ansible Service Broker.
+To properly make our coordinates available to another service, we use the `asb_encode_binding` module. This module should be called at the end of the APBs provision role and it will return bind credentials to the Ansible Service Broker.
 ```
 - name: encode bind credentials
   asb_encode_binding:
@@ -190,6 +190,7 @@ For this we use the `asb_encode_binding` module. This module should be called at
 
 
 # Working with Common Resources
+Below is a list of common resources that are created when developing APBs. Please see the [Ansible Kubernetes Module](https://github.com/ansible/ansible-kubernetes-modules/tree/master/library) for a full list of available resource modules.
 
 ## Service
 The following is a sample ansible task to create a service named `hello-world`. It is worth noting that the `namespace` variable in an APB will be provided by the Ansible Service Broker when launched from the WebUI.
@@ -327,7 +328,7 @@ The following is an example of creating a persistent volume claim resource and d
 # Tips and Tricks
 
 ## Optional Variables
-You can add optional variables to an Ansible Playbook Bundle by using environment variables. To pass variables into an APB, you will need to escape the variable substitution in your `.yml` files. For example, the below is a section of the [main.yml](https://github.com/fusor/apb-examples/blob/master/etherpad-apb/roles/provision-etherpad-apb/tasks/main.yml#L89) in the [etherpad-apb](https://github.com/fusor/apb-examples/tree/master/etherpad-apb):
+You can add optional variables to an Ansible Playbook Bundle by using environment variables. To pass variables into an APB, you will need to escape the variable substitution in your `.yml` files. For example, the section below is of [main.yml](https://github.com/fusor/apb-examples/blob/master/etherpad-apb/roles/provision-etherpad-apb/tasks/main.yml#L89) in the [etherpad-apb](https://github.com/fusor/apb-examples/tree/master/etherpad-apb):
 ```yaml
 - name: create mariadb deployment config
   openshift_v1_deployment_config:
