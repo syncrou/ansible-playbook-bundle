@@ -149,7 +149,7 @@ subcommand:
 In order to use the internal OpenShift Docker Registry to source APBs, you must have configured the Ansible Service Broker to use the `local_openshift` type registry adapter. Please see the [config](https://github.com/openshift/ansible-service-broker/blob/master/docs/config.md#local-openshift-registry) section for more information.
 ```bash
 apb init my-new-apb
-cd my-apb
+cd my-new-apb
 apb build
 apb push --openshift
 apb list
@@ -165,7 +165,7 @@ Ansible Service Broker can also be [configured](https://github.com/openshift/ans
 
 ```bash
 apb init my-new-apb
-cd my-apb
+cd my-new-apb
 apb build --tag docker.io/my-org/my-new-apb
 docker push docker.io/my-org/my-new-apb
 apb bootstrap
