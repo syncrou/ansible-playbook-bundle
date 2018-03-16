@@ -93,3 +93,7 @@ ASYNC_OPTIONS = ['required', 'optional', 'unsupported']
 SPEC_LABEL = 'com.redhat.apb.spec'
 VERSION_LABEL = 'com.redhat.apb.version'
 WATCH_POD_SLEEP = 5
+
+def cmdrun_cf(**kwargs):
+    """ Run CF apb operations """
+    print "CF args %s" % kwargs

@@ -6,6 +6,7 @@ import argparse
 import pkg_resources
 
 #import cloudforms.engine
+import engine
 
 SKIP_OPTIONS = ['provision', 'deprovision', 'bind', 'unbind', 'roles']
 
@@ -15,6 +16,33 @@ AVAILABLE_COMMANDS = {
     'version': 'Get current version of CF APB tool'
 }
 
+def subcmd_cf_parser(subcmd):
+    """ cf subcommand """
+    subcmd.add_argument(
+        '--service-url',
+        action='store',
+        dest='service-url',
+        help=u'Service URL to connect to',
+    )
+
+    subcmd.add_argument(
+        '--username',
+        action='store',
+        dest='username',
+        help=u'The username to connect to CF with',
+        default='admin'
+    )
+
+    subcmd.add_argument(
+        '--password',
+        action='store',
+        dest='password',
+        help=u'The password to connect to CF with',
+        default='smartvm'
+    )
+    return
+
+
 def subcmd_version_parser(subcmd):
     """ version subcommand """
     return
@@ -22,11 +50,6 @@ def subcmd_version_parser(subcmd):
 
 def subcmd_help_parser(subcmd):
     """ help subcommand """
-    return
-
-
-def subcmd_cf_parser(subcmd):
-    """ cf subcommand """
     return
 
 
@@ -67,12 +90,12 @@ def main():
         print("Version: cf-cli-apb-%s" % version)
         sys.exit(0)
 
-    #try:
-    #    getattr(cloudforms.engine,
-    #            u'cmdrun_{}'.format(args.subcommand))(**vars(args))
-    #except Exception as e:
-    #    print("Exception occurred! %s" % e)
-    #    sys.exit(1)
+    try:
+        getattr(engine,
+                u'cmdrun_{}'.format(args.subcommand))(**vars(args))
+    except Exception as e:
+        print("Exception occurred! %s" % e)
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
