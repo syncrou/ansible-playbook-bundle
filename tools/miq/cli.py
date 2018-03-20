@@ -1,35 +1,42 @@
-""" cli module which handles all of the cloudforms commandline parsing """
+""" cli module which handles all of the miq commandline parsing """
 import os
 import sys
 import pdb
 import argparse
 import pkg_resources
+import traceback
 
-#import cloudforms.engine
 import engine
 
 SKIP_OPTIONS = ['provision', 'deprovision', 'bind', 'unbind', 'roles']
 
 AVAILABLE_COMMANDS = {
     'help': 'Display this help message',
-    'cf': 'Modify the environment for a CloudForms service',
-    'version': 'Get current version of CF APB tool'
+    'add': 'Add new MIQ specific apb information',
+    'version': 'Get current version of MIQ APB tool'
 }
 
-def subcmd_cf_parser(subcmd):
-    """ cf subcommand """
+def subcmd_add_parser(subcmd):
+    """ add subcommand """
     subcmd.add_argument(
-        '--service-url',
+        '--server',
         action='store',
-        dest='service-url',
-        help=u'Service URL to connect to',
+        dest='server',
+        help=u'Ip or Hostname to connect to',
+    )
+
+    subcmd.add_argument(
+        '--service',
+        action='store',
+        dest='service',
+        help=u'HREF slug endpoint to connect to',
     )
 
     subcmd.add_argument(
         '--username',
         action='store',
         dest='username',
-        help=u'The username to connect to CF with',
+        help=u'The username to connect to MIQ with',
         default='admin'
     )
 
@@ -37,8 +44,16 @@ def subcmd_cf_parser(subcmd):
         '--password',
         action='store',
         dest='password',
-        help=u'The password to connect to CF with',
+        help=u'The password to connect to MIQ with',
         default='smartvm'
+    )
+
+    subcmd.add_argument(
+        '--validate-certs',
+        action='store',
+        dest='validate-certs',
+        help=u'Validate the certificate used with SSL for the MIQ API connection',
+        default=False
     )
     return
 
@@ -57,8 +72,8 @@ def main():
     """ main """
     #pdb.set_trace()
     parser = argparse.ArgumentParser(
-        description=u'CF tooling for '
-        u'assisting in building and packaging CloudForms APBs.'
+        description=u'MIQ tooling for '
+        u'assisting in building and packaging MIQ APBs.'
     )
 
     parser.add_argument(
@@ -95,6 +110,7 @@ def main():
                 u'cmdrun_{}'.format(args.subcommand))(**vars(args))
     except Exception as e:
         print("Exception occurred! %s" % e)
+        traceback.print_exc()
         sys.exit(1)
 
 if __name__ == "__main__":
