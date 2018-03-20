@@ -82,14 +82,21 @@ class ServiceTemplate(MiqConnect):
         resp = self.get()
         print resp
 
-
-def cmdrun_add(**kwargs):
-    """ Run MIQ apb operations """
+def check_for_inited_apb():
+    """
+        Make sure we're in an existing APB directory
+    """
     # check for Dockerfile, apb.yml, Makefile
     for fname in ('Dockerfile', 'apb.yml', 'Makefile'):
         if os.path.isfile(fname):
             pass
         else:
-            raise "Are you in an apb directory"
+            raise Exception("Missing filename: {fname}, Are you running inside an apb directory?".format(fname=fname))
+
+
+
+def cmdrun_add(**kwargs):
+    """ Run MIQ apb operations """
+    check_for_inited_apb()
     temp = ServiceTemplate(kwargs)
     return temp.convert()

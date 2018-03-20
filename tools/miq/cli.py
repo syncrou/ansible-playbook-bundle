@@ -108,9 +108,10 @@ def main():
     try:
         getattr(engine,
                 u'cmdrun_{}'.format(args.subcommand))(**vars(args))
-    except Exception as e:
-        print("Exception occurred! %s" % e)
-        traceback.print_exc()
+    except Exception as error:
+        print "Exception occurred! %s" % error
+        if args.debug:
+            traceback.print_exc()
         sys.exit(1)
 
 if __name__ == "__main__":
