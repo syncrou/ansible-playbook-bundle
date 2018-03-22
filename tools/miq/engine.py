@@ -1,7 +1,7 @@
 import os
+import pdb
 import json
 import re
-import pdb
 import requests
 
 class MiqConnect(object):
@@ -10,6 +10,7 @@ class MiqConnect(object):
     """
 
     def __init__(self, opts):
+        self._opts = opts
         self._server = opts['server']
         self._service = opts['service']
         self._username = opts['username']
@@ -70,17 +71,57 @@ class MiqConnect(object):
         #post_data = json.dumps(dict(action=post_dict['action'], resource=post_dict['resource']))
         #return self._build_result('post', post_data)
 
+
+class ServiceDialog(MiqConnect):
+    """
+        Service Dialog
+    """
+
+    def __init__(self, opts):
+        super(ServiceDialog, self).__init__(opts)
+        self._dialog_id = opts['dialog_id']
+        self._tabs = self.get()
+
+
+    def _build_url(self):
+        """
+            Using any type of href input, build out the correct url
+        """
+
+        return "http://" + self._server + '/api/service_dialogs/' + self._dialog_id
+
+
+    def process_tabs(self):
+        return self._tabs
+
+
 class ServiceTemplate(MiqConnect):
     """
         Grab a service template from miq, and parse it
     """
 
+    def __init__(self, opts):
+        super(ServiceTemplate, self).__init__(opts)
+        self._template = self.get()
+        self._config_info = self._template['config_info']
+        self._opts['dialog_id'] = self._config_info['provision']['dialog_id']
+
+
+    def dialog(self):
+        """
+            Returns the Dialog for the Service Template
+        """
+        dialog = ServiceDialog(self._opts)
+        return dialog
+
+
     def convert(self):
         """
             Convert a ServiceTemplate into an apb.yaml file
         """
-        resp = self.get()
-        print resp
+        dialog = self.dialog()
+        print dialog.process_tabs()
+
 
 def check_for_inited_apb():
     """

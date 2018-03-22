@@ -70,7 +70,6 @@ def subcmd_help_parser(subcmd):
 
 def main():
     """ main """
-    #pdb.set_trace()
     parser = argparse.ArgumentParser(
         description=u'MIQ tooling for '
         u'assisting in building and packaging MIQ APBs.'
