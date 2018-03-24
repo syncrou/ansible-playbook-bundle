@@ -115,6 +115,12 @@ class ReduceToYaml(object):
         self._dialog = service_dialog
         self._template = service_template
         self._svc_dialog_params = list()
+        self.initialize_params()
+
+
+    def initialize_params(self):
+        self._svc_dialog_params.append(self.CFME_REQUESTER)
+        self._svc_dialog_params.append(self.CFME_PASSWORD)
 
 
     def process_tabs(self):
@@ -223,7 +229,7 @@ class ReduceToYaml(object):
     def create_apb_yml(self):
         parameters = self._svc_dialog_params
         svc_template = self._template
-        print "Creating apb yaml file #{@apb_yml_file} for service template #{svc_template['name']}"
+        print "Creating apb yaml file apb.yml for service template {name}".format(name=svc_template['name'])
         metadata = dict(displayName="{name} (APB)".format(name=svc_template['name']))
         if 'picture' in svc_template:
             metadata['imageUrl'] = svc_template['picture']['image_href']
@@ -248,7 +254,18 @@ class ReduceToYaml(object):
                    plans=[default_plan])
 
         with open('apb.yml', 'w') as outfile:
-            yaml.dump(apb, outfile, default_flow_style=False)
+            yaml.safe_dump(apb, outfile, default_flow_style=False)
+
+
+    def create_vars_yml(self):
+        parameters = self._svc_dialog_params
+        svc_template = self._template
+        print "Creating vars yaml file vars.yml for service template {name}".format(name=svc_template['name'])
+        manageiq_vars = dict(api_url='http://localhost:3000/api',
+                             service_template_href=svc_template['href'])
+        varis = dict(manageiq=manageiq_vars)
+        with open('vars.yml', 'w') as outfile:
+            yaml.safe_dump(varis, outfile, default_flow_style=False)
 
 class ServiceTemplate(MiqConnect):
     """
@@ -282,6 +299,7 @@ class ServiceTemplate(MiqConnect):
         toyaml = ReduceToYaml(dialog, template)
         toyaml.process_tabs()
         toyaml.create_apb_yml()
+        toyaml.create_vars_yml()
 
 
 def check_for_inited_apb():
@@ -300,5 +318,5 @@ def check_for_inited_apb():
 def cmdrun_add(**kwargs):
     """ Run MIQ apb operations """
     check_for_inited_apb()
-    temp = ServiceTemplate(kwargs)
-    temp.convert(temp.template)
+    svc_template = ServiceTemplate(kwargs)
+    svc_template.convert(svc_template.template)
