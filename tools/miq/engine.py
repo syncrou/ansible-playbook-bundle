@@ -3,6 +3,7 @@ import pdb
 import json
 import re
 import requests
+import yaml
 
 class MiqConnect(object):
     """
@@ -102,8 +103,17 @@ class ReduceToYaml(object):
                        DialogFieldDropDownList='dialog_field_drop_down_list',
                        DialogFieldTagControl='dialog_field_tag_control')
 
-    def __init__(self, service_dialog):
+
+    CFME_REQUESTER = dict(title='CFME Requester', name='cfme_user',
+                          type='string',
+                          display_group='CloudForms Credentials')
+    CFME_PASSWORD = dict(title='CFME Password', name='cfme_password',
+                         type='string', display_type='password',
+                         display_group='CloudForms Credentials')
+
+    def __init__(self, service_dialog, service_template):
         self._dialog = service_dialog
+        self._template = service_template
         self._svc_dialog_params = list()
 
 
@@ -123,11 +133,8 @@ class ReduceToYaml(object):
             if dialog_field['dynamic']:
                 raise "Dynamic fields are not currently supported"
             item = self.initialize_apb_parameter(dialog_field, display_group)
-            pdb.set_trace()
             item = getattr(self, self.DIALOG_TYPE[dialog_field['type']])(dialog_field, item)
-            #send(dialog_field['type'].to_sym, dialog_field, item)
             self._svc_dialog_params.append(item)
-        print self._svc_dialog_params
 
 
     def initialize_apb_parameter(self, dialog_field, display_group):
@@ -208,10 +215,40 @@ class ReduceToYaml(object):
             return "int"
         return "string"
 
-    #def apb_normalized_name(name)
+    def apb_normalized_name(self, name):
     #  "#{name.downcase.gsub(/[()_,. ]/, '-')}-apb"
-    #end
+        return "manageiq-please-fix-me-abp"
 
+
+    def create_apb_yml(self):
+        parameters = self._svc_dialog_params
+        svc_template = self._template
+        print "Creating apb yaml file #{@apb_yml_file} for service template #{svc_template['name']}"
+        metadata = dict(displayName="{name} (APB)".format(name=svc_template['name']))
+        if 'picture' in svc_template:
+            metadata['imageUrl'] = svc_template['picture']['image_href']
+
+        plan_metadata = dict(displayName='Default',
+                             longDescription="This plan deploys an instance of {name}".format(name=svc_template['name']),
+                             cost='$0.0')
+
+        default_plan = dict(name='default',
+                            description="Default deployment plan for {name}-apb".format(name=svc_template['name']),
+                            free='true',
+                            metadata=plan_metadata,
+                            parameters=parameters)
+        if 'description' not in svc_template:
+            svc_template['description'] = 'No description provided'
+        apb = dict(version=1.0,
+                   name=self.apb_normalized_name(svc_template['name']),
+                   description=(svc_template['description'] or 'No description provided'),
+                   bindable='false',
+                   async='optional',
+                   metadata=metadata,
+                   plans=[default_plan])
+
+        with open('apb.yml', 'w') as outfile:
+            yaml.dump(apb, outfile, default_flow_style=False)
 
 class ServiceTemplate(MiqConnect):
     """
@@ -224,6 +261,10 @@ class ServiceTemplate(MiqConnect):
         self._config_info = self._template['config_info']
         self._opts['dialog_id'] = self._config_info['provision']['dialog_id']
 
+    @property
+    def template(self):
+        return self._template
+
 
     def dialog(self):
         """
@@ -233,13 +274,14 @@ class ServiceTemplate(MiqConnect):
         return dialog
 
 
-    def convert(self):
+    def convert(self, template):
         """
             Convert a ServiceTemplate into an apb.yaml file
         """
         dialog = self.dialog()
-        yaml = ReduceToYaml(dialog)
-        yaml.process_tabs()
+        toyaml = ReduceToYaml(dialog, template)
+        toyaml.process_tabs()
+        toyaml.create_apb_yml()
 
 
 def check_for_inited_apb():
@@ -259,4 +301,4 @@ def cmdrun_add(**kwargs):
     """ Run MIQ apb operations """
     check_for_inited_apb()
     temp = ServiceTemplate(kwargs)
-    temp.convert()
+    temp.convert(temp.template)
